@@ -9,11 +9,38 @@ def celsius_to_fahrenheit(c):
     return c * 9 / 5 + 32
 
 
-def show_status(client, device_id):
-    temp_c = client.get_temperature(device_id)
-    mode = client.get_hvac_mode(device_id)
-    print(f"\n  Current temperature : {temp_c:.1f}°C ({celsius_to_fahrenheit(temp_c):.1f}°F)")
-    print(f"  HVAC mode           : {mode}")
+def show_status(client, device_id, display_name="Thermostat"):
+    s = client.get_status(device_id)
+
+    def fmt_temp(c, f):
+        if c is None:
+            return "N/A"
+        return f"{f:.1f}°F  ({c:.1f}°C)"
+
+    rows = [
+        ("Connectivity",       s["connectivity"] or "N/A"),
+        ("Temperature",        fmt_temp(s["temperature_c"], s["temperature_f"])),
+        ("Humidity",           f"{s['humidity']}%" if s["humidity"] is not None else "N/A"),
+        ("HVAC Status",        s["hvac_status"] or "N/A"),
+        ("Mode",               s["mode"] or "N/A"),
+        ("Eco Mode",           s["eco_mode"] or "N/A"),
+        ("Heat Setpoint",      fmt_temp(s["heat_setpoint_c"], s["heat_setpoint_f"])),
+        ("Cool Setpoint",      fmt_temp(s["cool_setpoint_c"], s["cool_setpoint_f"])),
+        ("Fan",                s["fan"] or "N/A"),
+        ("Temp Scale",         s["temp_scale"] or "N/A"),
+    ]
+
+    col_width = max(len(r[0]) for r in rows) + 2
+    table_width = col_width + 28
+    divider = "  +" + "-" * (col_width + 1) + "+" + "-" * 26 + "+"
+    title = f"  | {display_name:^{table_width}}|"
+    title_divider = "  +" + "-" * (table_width + 1) + "+"
+    print(title_divider)
+    print(title)
+    print(divider)
+    for label, value in rows:
+        print(f"  | {label:<{col_width}}| {value:<25}|")
+    print(divider)
 
 
 def change_temperature(client, device_id):
@@ -73,7 +100,7 @@ def main():
     print(f"\nConnected to: {display_name}")
 
     while True:
-        show_status(client, device_id)
+        show_status(client, device_id, display_name)
         print("\n  1. Change temperature")
         print("  2. Change HVAC mode")
         print("  3. Refresh status")

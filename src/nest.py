@@ -136,18 +136,52 @@ class NestClient:
 
     # --- Thermostat controls ---
 
-    def get_temperature(self, device_id):
+    def get_all_traits(self, device_id):
         url = f"{SDM_BASE_URL}/enterprises/{self.project_id}/devices/{device_id}"
         data = self._get(url)
-        traits = data.get("traits", {})
+        return data.get("traits", {})
+
+    def get_status(self, device_id):
+        traits = self.get_all_traits(device_id)
+
+        def c_to_f(c):
+            return c * 9 / 5 + 32 if c is not None else None
+
+        temp_c = traits.get("sdm.devices.traits.Temperature", {}).get("ambientTemperatureCelsius")
+        humidity = traits.get("sdm.devices.traits.Humidity", {}).get("ambientHumidityPercent")
+        hvac_status = traits.get("sdm.devices.traits.ThermostatHvac", {}).get("status")
+        mode = traits.get("sdm.devices.traits.ThermostatMode", {}).get("mode")
+        eco = traits.get("sdm.devices.traits.ThermostatEco", {}).get("mode")
+        heat_sp = traits.get("sdm.devices.traits.ThermostatTemperatureSetpoint", {}).get("heatCelsius")
+        cool_sp = traits.get("sdm.devices.traits.ThermostatTemperatureSetpoint", {}).get("coolCelsius")
+        connectivity = traits.get("sdm.devices.traits.Connectivity", {}).get("status")
+        fan = traits.get("sdm.devices.traits.Fan", {}).get("timerMode")
+        temp_scale = traits.get("sdm.devices.traits.Settings", {}).get("temperatureScale", "CELSIUS")
+
+        return {
+            "connectivity":    connectivity,
+            "temperature_c":   temp_c,
+            "temperature_f":   c_to_f(temp_c),
+            "humidity":        humidity,
+            "hvac_status":     hvac_status,
+            "mode":            mode,
+            "eco_mode":        eco,
+            "heat_setpoint_c": heat_sp,
+            "heat_setpoint_f": c_to_f(heat_sp),
+            "cool_setpoint_c": cool_sp,
+            "cool_setpoint_f": c_to_f(cool_sp),
+            "fan":             fan,
+            "temp_scale":      temp_scale,
+        }
+
+    def get_temperature(self, device_id):
+        traits = self.get_all_traits(device_id)
         temp = traits.get("sdm.devices.traits.Temperature", {}).get("ambientTemperatureCelsius")
         logger.info(f"Current temperature: {temp}°C")
         return temp
 
     def get_hvac_mode(self, device_id):
-        url = f"{SDM_BASE_URL}/enterprises/{self.project_id}/devices/{device_id}"
-        data = self._get(url)
-        traits = data.get("traits", {})
+        traits = self.get_all_traits(device_id)
         mode = traits.get("sdm.devices.traits.ThermostatMode", {}).get("mode")
         logger.info(f"HVAC mode: {mode}")
         return mode
