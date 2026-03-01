@@ -27,7 +27,6 @@ def show_status(client, device_id, display_name="Thermostat"):
         ("Heat Setpoint",      fmt_temp(s["heat_setpoint_c"], s["heat_setpoint_f"])),
         ("Cool Setpoint",      fmt_temp(s["cool_setpoint_c"], s["cool_setpoint_f"])),
         ("Fan",                s["fan"] or "N/A"),
-        ("Temp Scale",         s["temp_scale"] or "N/A"),
     ]
 
     col_width = max(len(r[0]) for r in rows) + 2
@@ -95,7 +94,7 @@ def main():
     device_id = thermostat["name"].split("/")[-1]
     display_name = thermostat.get("traits", {}).get(
         "sdm.devices.traits.Info", {}
-    ).get("customName", device_id)
+    ).get("customName") or "Nest Thermostat"
 
     print(f"\nConnected to: {display_name}")
 
