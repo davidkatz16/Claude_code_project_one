@@ -92,9 +92,11 @@ def main():
 
     thermostat = thermostats[0]
     device_id = thermostat["name"].split("/")[-1]
-    display_name = thermostat.get("traits", {}).get(
-        "sdm.devices.traits.Info", {}
-    ).get("customName") or "Nest Thermostat"
+    display_name = (
+        thermostat.get("traits", {}).get("sdm.devices.traits.Info", {}).get("customName")
+        or thermostat.get("parentRelations", [{}])[0].get("displayName")
+        or "Nest Thermostat"
+    )
 
     print(f"\nConnected to: {display_name}")
 
