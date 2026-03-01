@@ -1,0 +1,15 @@
+# Data Science
+numpy
+pandas
+matplotlib
+scikit-learn
+
+# Web
+requests
+flask
+fastapi
+
+# Utilities
+python-dotenv
+tqdm
+loguru
