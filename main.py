@@ -8,8 +8,8 @@ def main():
     if not client.access_token:
         url = client.get_authorization_url()
         print(f"\nOpen this URL in your browser to authorize:\n\n{url}\n")
-        code = input("Enter the authorization code: ").strip()
-        client.authorize(code)
+        print("Waiting for authorization...")
+        client.authorize()
 
     # List thermostats
     thermostats = client.get_thermostats()

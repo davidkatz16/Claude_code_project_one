@@ -1,18 +1,20 @@
 import json
 import os
 import requests
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from urllib.parse import urlparse, parse_qs
 from logger import logger
 from config import (
     GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET,
     GOOGLE_PROJECT_ID,
-    GOOGLE_REDIRECT_URI,
 )
 
 TOKEN_FILE = "tokens.json"
 AUTH_URL = "https://nestservices.google.com/partnerconnections/{project_id}/auth"
 TOKEN_URL = "https://www.googleapis.com/oauth2/v4/token"
 SDM_BASE_URL = "https://smartdevicemanagement.googleapis.com/v1"
+REDIRECT_URI = "http://localhost:8080"
 
 
 class NestClient:
@@ -20,7 +22,7 @@ class NestClient:
         self.project_id = GOOGLE_PROJECT_ID
         self.client_id = GOOGLE_CLIENT_ID
         self.client_secret = GOOGLE_CLIENT_SECRET
-        self.redirect_uri = GOOGLE_REDIRECT_URI
+        self.redirect_uri = REDIRECT_URI
         self.access_token = None
         self.refresh_token = None
         self._load_tokens()
@@ -52,13 +54,14 @@ class NestClient:
         req = requests.Request("GET", url, params=params).prepare()
         return req.url
 
-    def authorize(self, code):
+    def authorize(self):
+        auth_code = self._capture_auth_code()
         response = requests.post(TOKEN_URL, data={
             "client_id": self.client_id,
             "client_secret": self.client_secret,
             "redirect_uri": self.redirect_uri,
             "grant_type": "authorization_code",
-            "code": code,
+            "code": auth_code,
         })
         response.raise_for_status()
         tokens = response.json()
@@ -66,6 +69,24 @@ class NestClient:
         self.refresh_token = tokens["refresh_token"]
         self._save_tokens(tokens)
         logger.info("Authorization successful.")
+
+    def _capture_auth_code(self):
+        captured = {}
+
+        class Handler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                params = parse_qs(urlparse(self.path).query)
+                captured["code"] = params.get("code", [None])[0]
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(b"Authorization successful! You can close this tab.")
+
+            def log_message(self, format, *args):
+                pass  # suppress server logs
+
+        server = HTTPServer(("localhost", 8080), Handler)
+        server.handle_request()
+        return captured["code"]
 
     def refresh_access_token(self):
         response = requests.post(TOKEN_URL, data={
