@@ -22,7 +22,11 @@ def change_temperature(client, device_id):
         print(f"\n  HVAC mode is currently '{mode}'. Set mode to HEAT or COOL first.")
         return
 
-    unit = input("\n  Enter temperature unit (F/C) [F]: ").strip().upper() or "F"
+    while True:
+        unit = input("\n  Enter temperature unit (F/C) [F]: ").strip().upper() or "F"
+        if unit in ("F", "C"):
+            break
+        print("  Invalid unit. Please enter F or C.")
     raw = input(f"  Enter target temperature in °{unit}: ").strip()
 
     try:
