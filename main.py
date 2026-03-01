@@ -1,4 +1,6 @@
 from src.nest import NestClient
+from utils.weather import WeatherClient
+from config import WEATHER_ZIP
 
 
 def fahrenheit_to_celsius(f):
@@ -9,7 +11,7 @@ def celsius_to_fahrenheit(c):
     return c * 9 / 5 + 32
 
 
-def show_status(client, device_id, display_name="Thermostat"):
+def show_status(client, device_id, display_name="Thermostat", weather=None):
     s = client.get_status(device_id)
 
     def fmt_temp(c, f):
@@ -28,6 +30,15 @@ def show_status(client, device_id, display_name="Thermostat"):
         ("Cool Setpoint",      fmt_temp(s["cool_setpoint_c"], s["cool_setpoint_f"])),
         ("Fan",                s["fan"] or "N/A"),
     ]
+
+    if weather:
+        rows += [
+            ("--- Outside ---",     ""),
+            ("Conditions",         weather["description"] or "N/A"),
+            ("Outside Temp",       fmt_temp(weather["temperature_c"], weather["temperature_f"])),
+            ("Outside Humidity",   f"{weather['humidity']}%" if weather["humidity"] is not None else "N/A"),
+            ("Wind Speed",         f"{weather['wind_speed_mph']:.1f} mph" if weather["wind_speed_mph"] is not None else "N/A"),
+        ]
 
     col_width = max(len(r[0]) for r in rows) + 2
     table_width = col_width + 28
@@ -98,10 +109,12 @@ def main():
         or "Nest Thermostat"
     )
 
+    weather_client = WeatherClient(WEATHER_ZIP) if WEATHER_ZIP else None
     print(f"\nConnected to: {display_name}")
 
     while True:
-        show_status(client, device_id, display_name)
+        weather = weather_client.get_current() if weather_client else None
+        show_status(client, device_id, display_name, weather)
         print("\n  1. Change temperature")
         print("  2. Change HVAC mode")
         print("  3. Refresh status")

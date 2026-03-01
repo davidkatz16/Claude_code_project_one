@@ -18,3 +18,6 @@ API_KEY = os.getenv("API_KEY", "")
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
 GOOGLE_PROJECT_ID = os.getenv("GOOGLE_PROJECT_ID", "")
+
+# Weather
+WEATHER_ZIP = os.getenv("WEATHER_ZIP", "")
