@@ -42,5 +42,8 @@ htmlcov/
 *.swp
 *.swo
 
+# Logs
+logs/
+
 # macOS
 .DS_Store
